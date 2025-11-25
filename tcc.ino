@@ -25,7 +25,7 @@ void setup() {
   finger.getTemplateCount();
 
   if (finger.templateCount == 0) {
-    Serial.print("Sensor doesn't contain any fingerprint data. Please run the 'enroll' example.");
+    Serial.println("Sensor doesn't contain any fingerprint data. Please run the 'enroll' example.");
   }
   else {
     Serial.println("Waiting for valid finger...");
@@ -143,12 +143,7 @@ uint8_t getFinger(){
     switch (p) {
     case FINGERPRINT_OK:
       break;
-    case FINGERPRINT_NOFINGER:lcd.clear();
-      lcd.setCursor(2, 0);
-      lcd.print("Houve algum");
-      lcd.setCursor(3, 1);
-      lcd.print("Erro!!");
-      delay(3000);
+    case FINGERPRINT_NOFINGER:
       break;
     case FINGERPRINT_PACKETRECIEVEERR:
       lcd.setCursor(2, 0);

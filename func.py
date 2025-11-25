@@ -7,10 +7,10 @@ load_dotenv()
 
 conec_data = os.getenv('DATABASE_URL')
 
-with psycopg.connect(conec_data) as conec:
-    with conec.cursor() as db:
+conec = psycopg.connect(conec_data)
+db = conec.cursor()
 
-        def salvar_cadastro_prof(arduino, nome):
+def salvar_cadastro_prof(arduino, nome):
             arduino.reset_input_buffer()
             arduino.reset_output_buffer()
             arduino.write("i".encode())
@@ -42,7 +42,7 @@ with psycopg.connect(conec_data) as conec:
 
             return print("cadastro feito!!")
 
-        def salvar_cadastro_aluno(arduino, nome, serie,sala):
+def salvar_cadastro_aluno(arduino, nome, serie,sala):
 
             arduino.reset_input_buffer()
             arduino.reset_output_buffer()
@@ -90,7 +90,7 @@ with psycopg.connect(conec_data) as conec:
             time.sleep(0.1)
 
 
-        def salvar_prof(arduino, nome):
+def salvar_prof(arduino, nome):
 
             arduino.reset_input_buffer()
             arduino.reset_output_buffer()
@@ -101,7 +101,7 @@ with psycopg.connect(conec_data) as conec:
             arduino.reset_output_buffer()
             salvar_cadastro_prof(arduino, nome)
 
-        def salvar_aluno(arduino, nome, serie, sala):
+def salvar_aluno(arduino, nome, serie, sala):
             arduino.reset_input_buffer()
             arduino.reset_output_buffer()
             arduino.write("l".encode())
@@ -111,7 +111,7 @@ with psycopg.connect(conec_data) as conec:
             arduino.reset_output_buffer()
             salvar_cadastro_aluno(arduino, nome, serie, sala)
 
-        def deletar(arduino, id):
+def deletar(arduino, id):
 
             id_valido = int(id)
             arduino.reset_input_buffer()

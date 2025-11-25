@@ -70,32 +70,44 @@ class App(ctk.CTk):
 
                         if id_arduino:
                             try:
-                                presenca_1 =db.execute('''SELECT estado FROM primeira_aula WHERE id = %s''', (id_arduino,))
-                                presenca_aula_1 = presenca_1.fetchone()
-
-                                em_sala_1 = db.execute('''SELECT em_sala FROM primeira_aula WHERE id = %s''', (id_arduino,))
-                                em_sala_aula_1 = em_sala_1.fetchone()
-
-                                presenca_2 = db.execute('''SELECT estado FROM segunda_aula WHERE id = %s''', (id_arduino,))
-                                presenca_aula_2 = presenca_2.fetchone()
-
-                                em_sala_2 = db.execute('''SELECT em_sala FROM segunda_aula WHERE id = %s''', (id_arduino,))
-                                em_sala_aula_2 = em_sala_2.fetchone()
-
-                                presenca_3 = db.execute('''SELECT estado FROM terceira_aula WHERE id = %s''', (id_arduino,))
-                                presenca_aula_3 = presenca_3.fetchone()
-
-                                em_sala_3 = db.execute('''SELECT em_sala FROM terceira_aula WHERE id = %s''', (id_arduino,))
-                                em_sala_aula_3 = em_sala_3.fetchone()
-
-                                conec.commit()
 
                                 db.execute('SELECT nome FROM alunos WHERE id= %s', (id_arduino,))
                                 result = db.fetchone()
 
-                                if result[0]:
+                                if result is not None:
+
+                                    presenca_1 = db.execute('''SELECT estado
+                                                               FROM primeira_aula
+                                                               WHERE id = %s''', (id_arduino,))
+                                    presenca_aula_1 = presenca_1.fetchone()
+
+                                    em_sala_1 = db.execute('''SELECT em_sala
+                                                              FROM primeira_aula
+                                                              WHERE id = %s''', (id_arduino,))
+                                    em_sala_aula_1 = em_sala_1.fetchone()
+
+                                    presenca_2 = db.execute('''SELECT estado
+                                                               FROM segunda_aula
+                                                               WHERE id = %s''', (id_arduino,))
+                                    presenca_aula_2 = presenca_2.fetchone()
+
+                                    em_sala_2 = db.execute('''SELECT em_sala
+                                                              FROM segunda_aula
+                                                              WHERE id = %s''', (id_arduino,))
+                                    em_sala_aula_2 = em_sala_2.fetchone()
+
+                                    presenca_3 = db.execute('''SELECT estado
+                                                               FROM terceira_aula
+                                                               WHERE id = %s''', (id_arduino,))
+                                    presenca_aula_3 = presenca_3.fetchone()
+
+                                    em_sala_3 = db.execute('''SELECT em_sala
+                                                              FROM terceira_aula
+                                                              WHERE id = %s''', (id_arduino,))
+                                    em_sala_aula_3 = em_sala_3.fetchone()
+
                                     nome = result[0]
-                                    db.execute('''INSERT INTO registros (id, nome, horario) VALUES (%s,%s,%s)''',
+                                    db.execute('''INSERT INTO registros_alunos (id, nome, horario) VALUES (%s,%s,%s)''',
                                                (id_arduino, nome, tempo))
                                     conec.commit()
                                     if inicio_1 <= tempo_2 <= fim_3:
@@ -156,13 +168,14 @@ class App(ctk.CTk):
                                         print("Fora do horario de aula")
 
                                 else:
+                                    print(id_arduino)
                                     db.execute('SELECT nome FROM professores WHERE id = %s', (id_arduino,))
                                     result = db.fetchone()
                                     if result is None:
                                         print("ID not found in alunos or professores")
                                     else:
                                         nome = result[0]
-                                        db.execute('INSERT INTO registros_profs (id, nome, horario) VALUES (%s, %s, %s)',
+                                        db.execute('INSERT INTO registros_professores (id, nome, horario) VALUES (%s, %s, %s)',
                                                    (id_arduino, nome, tempo))
                                         conec.commit()
                                         print("mandou")
