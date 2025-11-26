@@ -10,6 +10,8 @@ conec_data = os.getenv('DATABASE_URL')
 conec = psycopg.connect(conec_data)
 db = conec.cursor()
 
+
+
 def salvar_cadastro_prof(arduino, nome):
             arduino.reset_input_buffer()
             arduino.reset_output_buffer()
@@ -112,27 +114,29 @@ def salvar_aluno(arduino, nome, serie, sala):
             salvar_cadastro_aluno(arduino, nome, serie, sala)
 
 def deletar(arduino, id):
+    id_valido = int(id)  # Garante que 'id_valido' é um inteiro
+    arduino.reset_input_buffer()
+    arduino.reset_output_buffer()
 
-            id_valido = int(id)
-            arduino.reset_input_buffer()
-            arduino.reset_output_buffer()
-            try:
-                db.execute('DELETE FROM alunos WHERE id = %s', (id_valido,))
-                conec.commit()
-                if db.rowcount == 0:
-                    db.execute('DELETE FROM professores WHERE id = %s', (id_valido,))
-                    arduino.write("k".encode())
-                    time.sleep(0.2)
-                    arduino.write(id.encode())
-                    conec.commit()
-                    return None
-                else:
-                    arduino.write("k".encode())
-                    time.sleep(0.2)
-                    arduino.write(id.encode())
-                    return None
-            except psycopg.Error as e:
-                print(f"Erro ao deletar o id: {e}")
-                return None
+    try:
+        db.execute('DELETE FROM alunos WHERE id = %s', (id_valido,))
+        conec.commit()
 
+        if db.rowcount == 0:
+            db.execute('DELETE FROM professores WHERE id = %s', (id_valido,))
+            conec.commit()
+            arduino.write("k".encode())
+            time.sleep(0.2)
+            arduino.write(bytes([id_valido]))
+
+            return None
+        else:
+            arduino.write("k".encode())
+            time.sleep(0.2)
+            arduino.write(bytes([id_valido]))
+            return None
+
+    except psycopg.Error as e:
+        print(f"Erro ao deletar o id no banco: {e}")
+        return None
 

@@ -1,4 +1,6 @@
 from datetime import datetime, time
+from time import sleep
+
 import customtkinter as ctk
 import serial as sr
 from serial.serialutil import SerialException
@@ -40,154 +42,147 @@ class App(ctk.CTk):
         def sincronizar():
 
             def registrar():
-
-                tempo_2 = datetime.now().time()
-
-                inicio_1 = time(7, 30)
-                atraso = time(7, 45)
-                fim_1 = time(9, 10)
-                fim_2 = time(11, 5)
-                fim_3 = time(12, 45)
-
-                if not inicio_1 <= tempo_2 <= fim_3:
-                    arduino.write(b'n')
-                    arduino.flush()
-
-                if inicio_1 <= tempo_2 <= fim_3:
-                    arduino.write(b'p')
-                    arduino.flush()
-
                 if arduino.in_waiting > 0:
                     linha = arduino.readline().decode('utf-8').strip()
-                    if linha == "Did not find fingerprint sensor :(":
-                       erro_mensagem("o sensor não está funcinando")
-                       return
+                    print(f"DEBUG ARDUINO: {linha}")
+
                     try:
+                        inicio_1 = time(7, 30)
+                        atraso = time(7, 45)
+                        fim_1 = time(9, 10)
+                        fim_2 = time(11, 5)
+                        fim_3 = time(12, 45)
                         id_arduino = int(linha)
                         tempo = datetime.now()
+                        tempo_2 = tempo.time()
                         tempo = tempo.strftime('%Y-%m-%d %H:%M')
 
+                        db.execute('SELECT nome FROM alunos WHERE id= %s', (id_arduino,))
+                        result = db.fetchone()
 
-                        if id_arduino:
-                            try:
+                        if inicio_1 <= tempo_2 <= fim_3 and result is not None:
+                            arduino.write(b'h')
+                            arduino.flush()
+                            if id_arduino:
+                                    try:
+                                        if result is not None:
 
-                                db.execute('SELECT nome FROM alunos WHERE id= %s', (id_arduino,))
-                                result = db.fetchone()
+                                                presenca_1 = db.execute('''SELECT estado
+                                                                       FROM primeira_aula
+                                                                       WHERE id = %s''', (id_arduino,))
+                                                presenca_aula_1 = presenca_1.fetchone()
 
-                                if result is not None:
+                                                em_sala_1 = db.execute('''SELECT em_sala
+                                                                      FROM primeira_aula
+                                                                      WHERE id = %s''', (id_arduino,))
+                                                em_sala_aula_1 = em_sala_1.fetchone()
 
-                                    presenca_1 = db.execute('''SELECT estado
-                                                               FROM primeira_aula
-                                                               WHERE id = %s''', (id_arduino,))
-                                    presenca_aula_1 = presenca_1.fetchone()
+                                                presenca_2 = db.execute('''SELECT estado
+                                                                       FROM segunda_aula
+                                                                       WHERE id = %s''', (id_arduino,))
+                                                presenca_aula_2 = presenca_2.fetchone()
 
-                                    em_sala_1 = db.execute('''SELECT em_sala
-                                                              FROM primeira_aula
-                                                              WHERE id = %s''', (id_arduino,))
-                                    em_sala_aula_1 = em_sala_1.fetchone()
+                                                em_sala_2 = db.execute('''SELECT em_sala
+                                                                      FROM segunda_aula
+                                                                      WHERE id = %s''', (id_arduino,))
+                                                em_sala_aula_2 = em_sala_2.fetchone()
 
-                                    presenca_2 = db.execute('''SELECT estado
-                                                               FROM segunda_aula
-                                                               WHERE id = %s''', (id_arduino,))
-                                    presenca_aula_2 = presenca_2.fetchone()
+                                                presenca_3 = db.execute('''SELECT estado
+                                                                       FROM terceira_aula
+                                                                       WHERE id = %s''', (id_arduino,))
+                                                presenca_aula_3 = presenca_3.fetchone()
 
-                                    em_sala_2 = db.execute('''SELECT em_sala
-                                                              FROM segunda_aula
-                                                              WHERE id = %s''', (id_arduino,))
-                                    em_sala_aula_2 = em_sala_2.fetchone()
+                                                em_sala_3 = db.execute('''SELECT em_sala
+                                                                      FROM terceira_aula
+                                                                      WHERE id = %s''', (id_arduino,))
+                                                em_sala_aula_3 = em_sala_3.fetchone()
 
-                                    presenca_3 = db.execute('''SELECT estado
-                                                               FROM terceira_aula
-                                                               WHERE id = %s''', (id_arduino,))
-                                    presenca_aula_3 = presenca_3.fetchone()
-
-                                    em_sala_3 = db.execute('''SELECT em_sala
-                                                              FROM terceira_aula
-                                                              WHERE id = %s''', (id_arduino,))
-                                    em_sala_aula_3 = em_sala_3.fetchone()
-
-                                    nome = result[0]
-                                    db.execute('''INSERT INTO registros_alunos (id, nome, horario) VALUES (%s,%s,%s)''',
-                                               (id_arduino, nome, tempo))
-                                    conec.commit()
-                                    if inicio_1 <= tempo_2 <= fim_3:
-                                        if result[0] and presenca_aula_1[0] == "ausente" and presenca_aula_2[0] == "ausente" and presenca_aula_3[0] == "ausente":
-                                            if inicio_1 <= tempo_2 <= fim_1:
-                                                if inicio_1 <= tempo_2 <= atraso:
-                                                    db.execute('''UPDATE primeira_aula SET estado = %s, em_sala = %s,atrasado = %s, horario = %s WHERE id = %s''',
-                                                               ("Presente", "Presente","Não", tempo, id_arduino))
-                                                else:
-                                                    db.execute('''UPDATE primeira_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
-                                                               ("Presente", "Presente", "Sim", tempo, id_arduino))
-
-                                                db.execute('''UPDATE segunda_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
-                                                           ("Presente", "Presente", "Sim", tempo, id_arduino))
-
-                                                db.execute('''UPDATE terceira_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
-                                                           ("Presente", "Presente", "Sim", tempo, id_arduino))
-
+                                                nome = result[0]
+                                                db.execute('''INSERT INTO registros_alunos (id, nome, horario) VALUES (%s,%s,%s)''',
+                                                       (id_arduino, nome, tempo))
                                                 conec.commit()
-                                            elif fim_1 <= tempo_2 <= fim_2:
-                                                db.execute('''UPDATE segunda_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
-                                                           ("Presente", "Presente", "Sim", tempo, id_arduino))
 
-                                                db.execute('''UPDATE terceira_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
-                                                           ("Presente", "Presente", "Sim", tempo, id_arduino))
+                                                arduino.write(b'h')
+                                                if result[0] and presenca_aula_1[0] == "ausente" and presenca_aula_2[0] == "ausente" and presenca_aula_3[0] == "ausente":
+                                                    if inicio_1 <= tempo_2 <= fim_1:
+                                                        if inicio_1 <= tempo_2 <= atraso:
+                                                            db.execute('''UPDATE primeira_aula SET estado = %s, em_sala = %s,atrasado = %s, horario = %s WHERE id = %s''',
+                                                                       ("Presente", "Presente","Não", tempo, id_arduino))
+                                                        else:
+                                                            db.execute('''UPDATE primeira_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
+                                                                       ("Presente", "Presente", "Sim", tempo, id_arduino))
 
-                                                conec.commit()
-                                            elif fim_2 <= tempo_2 <= fim_3:
-                                                db.execute('''UPDATE terceira_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
-                                                    ("Presente", "Presente", "Sim", tempo, id_arduino))
+                                                        db.execute('''UPDATE segunda_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
+                                                                   ("Presente", "Presente", "Sim", tempo, id_arduino))
 
-                                                conec.commit()
-                                        elif result[0] and presenca_aula_1[0] == "Presente" and em_sala_aula_1[0] == "Presente":
-                                            db.execute('''UPDATE primeira_aula SET em_sala  = %s WHERE id = %s''',
-                                                       ("ausente", id_arduino))
-                                            conec.commit()
-                                        elif result[0] and presenca_aula_1[0] == "Presente" and em_sala_aula_1[0] == "ausente":
-                                            db.execute('''UPDATE primeira_aula SET em_sala  = %s WHERE id = %s''',
-                                                       ("Presente", id_arduino))
-                                            conec.commit()
-                                        elif result[0] and presenca_aula_2[0] == "Presente" and em_sala_aula_2[0] == "Presente":
-                                            db.execute('''UPDATE segunda_aula SET em_sala  = %s WHERE id = %s''',
-                                                       ("ausente", id_arduino))
-                                            conec.commit()
-                                        elif result[0] and presenca_aula_2[0] == "Presente" and em_sala_aula_2[0] == "ausente":
-                                            db.execute('''UPDATE segunda_aula SET em_sala  = %s WHERE id = %s''',
-                                                       ("Presente", id_arduino))
-                                            conec.commit()
-                                        elif result[0] and presenca_aula_3[0] == "Presente" and em_sala_aula_3[0] == "Presente":
-                                            db.execute('''UPDATE terceira_aula SET em_sala  = %s WHERE id = %s''',
-                                                       ("ausente", id_arduino))
-                                            conec.commit()
-                                        elif result[0] and presenca_aula_3[0] == "Presente" and em_sala_aula_3[0] == "ausente":
-                                            db.execute('''UPDATE terceira_aula SET em_sala  = %s WHERE id = %s''',
-                                                       ("Presente", id_arduino))
-                                            conec.commit()
-                                    else:
-                                        print("Fora do horario de aula")
+                                                        db.execute('''UPDATE terceira_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
+                                                                   ("Presente", "Presente", "Sim", tempo, id_arduino))
 
-                                else:
-                                    print(id_arduino)
-                                    db.execute('SELECT nome FROM professores WHERE id = %s', (id_arduino,))
-                                    result = db.fetchone()
-                                    if result is None:
-                                        print("ID not found in alunos or professores")
-                                    else:
-                                        nome = result[0]
-                                        db.execute('INSERT INTO registros_professores (id, nome, horario) VALUES (%s, %s, %s)',
-                                                   (id_arduino, nome, tempo))
-                                        conec.commit()
-                                        print("mandou")
+                                                        conec.commit()
+                                                    elif fim_1 <= tempo_2 <= fim_2:
+                                                        db.execute('''UPDATE segunda_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
+                                                                   ("Presente", "Presente", "Sim", tempo, id_arduino))
 
-                            except psycopg.IntegrityError as e:
-                                print(f"Erro de integridade no banco de dados: {e}")
-                            except Exception as e:
-                                print(f"Erro ao inserir no banco de dados: {e}")
+                                                        db.execute('''UPDATE terceira_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
+                                                                   ("Presente", "Presente", "Sim", tempo, id_arduino))
 
-                    except Exception:
-                        print(f"erro, por ser uma string")
+                                                        conec.commit()
+                                                    elif fim_2 <= tempo_2 <= fim_3:
+                                                        db.execute('''UPDATE terceira_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
+                                                            ("Presente", "Presente", "Sim", tempo, id_arduino))
 
+                                                        conec.commit()
+                                                elif result[0] and presenca_aula_1[0] == "Presente" and em_sala_aula_1[0] == "Presente":
+                                                    db.execute('''UPDATE primeira_aula SET em_sala  = %s WHERE id = %s''',
+                                                               ("ausente", id_arduino))
+                                                    conec.commit()
+                                                elif result[0] and presenca_aula_1[0] == "Presente" and em_sala_aula_1[0] == "ausente":
+                                                    db.execute('''UPDATE primeira_aula SET em_sala  = %s WHERE id = %s''',
+                                                               ("Presente", id_arduino))
+                                                    conec.commit()
+                                                elif result[0] and presenca_aula_2[0] == "Presente" and em_sala_aula_2[0] == "Presente":
+                                                    db.execute('''UPDATE segunda_aula SET em_sala  = %s WHERE id = %s''',
+                                                               ("ausente", id_arduino))
+                                                    conec.commit()
+                                                elif result[0] and presenca_aula_2[0] == "Presente" and em_sala_aula_2[0] == "ausente":
+                                                    db.execute('''UPDATE segunda_aula SET em_sala  = %s WHERE id = %s''',
+                                                               ("Presente", id_arduino))
+                                                    conec.commit()
+                                                elif result[0] and presenca_aula_3[0] == "Presente" and em_sala_aula_3[0] == "Presente":
+                                                    db.execute('''UPDATE terceira_aula SET em_sala  = %s WHERE id = %s''',
+                                                               ("ausente", id_arduino))
+                                                    conec.commit()
+                                                elif result[0] and presenca_aula_3[0] == "Presente" and em_sala_aula_3[0] == "ausente":
+                                                    db.execute('''UPDATE terceira_aula SET em_sala  = %s WHERE id = %s''',
+                                                               ("Presente", id_arduino))
+                                                    conec.commit()
+
+                                    except psycopg.IntegrityError as e:
+                                        print(f"Erro de integridade no banco de dados: {e}")
+                                    except Exception as e:
+                                        print(f"Erro ao inserir no banco de dados: {e}")
+                        elif result is None:
+                            arduino.write(b'h')
+                            arduino.flush()
+                            print(id_arduino)
+                            db.execute('SELECT nome FROM professores WHERE id = %s', (id_arduino,))
+                            result = db.fetchone()
+                            if result is None:
+                                print("ID not found in alunos or professores")
+                            else:
+                                nome = result[0]
+                                db.execute('INSERT INTO registros_professores (id, nome, horario) VALUES (%s, %s, %s)',
+                                           (id_arduino, nome, tempo))
+                                conec.commit()
+                                print("mandou")
+                        else:
+                            print("Fora do horario de aula")
+                            arduino.write(b'n')
+                            arduino.flush()
+                    except ValueError:
+                        pass
+                    except Exception as e:
+                        print(f"Erro geral: {e}")
                 self.after(1000, registrar)
             try:
                 arduino = sr.Serial('/dev/ttyUSB0', 9600, timeout=2)
@@ -487,7 +482,12 @@ class App(ctk.CTk):
 
                 if tipo == "professor":
                     self.verificacao_prof_id = ctk.CTkInputDialog(fg_color="#02135A", title="Verificacao",text="Id para atualização")
-                    id = int(self.verificacao_prof_id.get_input())
+
+                    valor = self.verificacao_prof_id.get_input()
+                    if valor == None:
+                        return None
+
+                    id = int(valor)
 
                     if not id:
                         return None
