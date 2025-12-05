@@ -16,4 +16,4 @@ O Sistema de Chamada Biométrica (SCB) é o nosso Trabalho de Conclusão de Curs
 
 #Como baixar o software
 
-Para adiquirir o software segue para o link 
+Para adiquirir o software segue para o link [Download Aqui!](https://github.com/fe1901/S.C.B./releases/tag/v.1)
