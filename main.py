@@ -1,5 +1,4 @@
 from datetime import datetime, time
-from time import sleep
 
 import customtkinter as ctk
 import serial as sr
@@ -98,9 +97,6 @@ class App(ctk.CTk):
                                                 em_sala_aula_3 = em_sala_3.fetchone()
 
                                                 nome = result[0]
-                                                db.execute('''INSERT INTO registros_alunos (id, nome, horario) VALUES (%s,%s,%s)''',
-                                                       (id_arduino, nome, tempo))
-                                                conec.commit()
 
                                                 arduino.write(b'h')
                                                 if result[0] and presenca_aula_1[0] == "ausente" and presenca_aula_2[0] == "ausente" and presenca_aula_3[0] == "ausente":
@@ -108,17 +104,43 @@ class App(ctk.CTk):
                                                         if inicio_1 <= tempo_2 <= atraso:
                                                             db.execute('''UPDATE primeira_aula SET estado = %s, em_sala = %s,atrasado = %s, horario = %s WHERE id = %s''',
                                                                        ("Presente", "Presente","Não", tempo, id_arduino))
+
+                                                            db.execute('''UPDATE segunda_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
+                                                                       ("Presente", "Presente", "Não", tempo,id_arduino))
+
+                                                            db.execute('''UPDATE terceira_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %sWHERE id = %s''',
+                                                                       ("Presente", "Presente", "Não", tempo,id_arduino))
+
+                                                            db.execute('''INSERT INTO registros_alunos (id, nome, horario,estado)VALUES (%s, %s, %s)''',
+                                                                       (id_arduino, nome, tempo, "Não"))
+                                                            conec.commit()
                                                         else:
                                                             db.execute('''UPDATE primeira_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
                                                                        ("Presente", "Presente", "Sim", tempo, id_arduino))
 
-                                                        db.execute('''UPDATE segunda_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
+                                                            db.execute('''UPDATE segunda_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
                                                                    ("Presente", "Presente", "Sim", tempo, id_arduino))
 
-                                                        db.execute('''UPDATE terceira_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
-                                                                   ("Presente", "Presente", "Sim", tempo, id_arduino))
-
+                                                            db.execute('''UPDATE terceira_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
+                                                                       ("Presente", "Presente", "Sim", tempo, id_arduino))
+                                                            db.execute(
+                                                                '''INSERT INTO registros_alunos (id, nome, horario, atraso)
+                                                                   VALUES (%s, %s, %s, %s)''',
+                                                                (id_arduino, nome, tempo, "Sim"))
                                                         conec.commit()
+
+                                                        db.execute('SELECT atraso FROM alunos WHERE id = %s',
+                                                                   (id_arduino,))
+                                                        atraso_aluno = db.fetchone()
+
+                                                        atraso_atual = atraso_aluno[0]
+
+                                                        atraso = atraso_atual + 1
+
+                                                        db.execute('UPDATE alunos SET atraso = %s WHERE id = %s ',
+                                                                   (atraso, id_arduino))
+                                                        conec.commit()
+
                                                     elif fim_1 <= tempo_2 <= fim_2:
                                                         db.execute('''UPDATE segunda_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
                                                                    ("Presente", "Presente", "Sim", tempo, id_arduino))
@@ -126,35 +148,91 @@ class App(ctk.CTk):
                                                         db.execute('''UPDATE terceira_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
                                                                    ("Presente", "Presente", "Sim", tempo, id_arduino))
 
+                                                        db.execute(
+                                                            '''INSERT INTO registros_alunos (id, nome, horario, atraso)
+                                                               VALUES (%s, %s, %s, %s)''',
+                                                            (id_arduino, nome, tempo, "Sim"))
                                                         conec.commit()
+                                                        db.execute('SELECT atraso FROM alunos WHERE id = %s',
+                                                                   (id_arduino,))
+                                                        atraso_aluno = db.fetchone()
+
+                                                        atraso_atual = atraso_aluno[0]
+
+                                                        atraso = atraso_atual + 1
+
+                                                        db.execute('UPDATE alunos SET atraso = %s WHERE id = %s ',
+                                                                   (atraso, id_arduino))
                                                     elif fim_2 <= tempo_2 <= fim_3:
                                                         db.execute('''UPDATE terceira_aula SET estado   = %s,em_sala  = %s,atrasado = %s,horario  = %s WHERE id = %s''',
                                                             ("Presente", "Presente", "Sim", tempo, id_arduino))
 
+                                                        db.execute(
+                                                            '''INSERT INTO registros_alunos (id, nome, horario, atraso)
+                                                               VALUES (%s, %s, %s, %s)''',
+                                                            (id_arduino, nome, tempo, "Sim"))
+
                                                         conec.commit()
-                                                elif result[0] and presenca_aula_1[0] == "Presente" and em_sala_aula_1[0] == "Presente":
+
+                                                        db.execute('SELECT atraso FROM alunos WHERE id = %s',
+                                                                   (id_arduino,))
+                                                        atraso_aluno = db.fetchone()
+
+                                                        atraso_atual = atraso_aluno[0]
+
+                                                        atraso = atraso_atual + 1
+
+                                                        db.execute('UPDATE alunos SET atraso = %s WHERE id = %s ',
+                                                                   (atraso, id_arduino))
+                                                elif result[0] and presenca_aula_1[0] == "Presente" and em_sala_aula_1[0] == "Presente" and inicio_1 <= tempo_2 <= fim_1:
                                                     db.execute('''UPDATE primeira_aula SET em_sala  = %s WHERE id = %s''',
                                                                ("ausente", id_arduino))
+
+                                                    db.execute(
+                                                        '''INSERT INTO registros_alunos (id, nome, horario, atraso)
+                                                           VALUES (%s, %s, %s, %s)''',
+                                                        (id_arduino, nome, tempo, "Sim"))
                                                     conec.commit()
-                                                elif result[0] and presenca_aula_1[0] == "Presente" and em_sala_aula_1[0] == "ausente":
+
+                                                elif result[0] and presenca_aula_1[0] == "Presente" and em_sala_aula_1[0] == "ausente" and inicio_1 <= tempo_2 <= fim_1:
                                                     db.execute('''UPDATE primeira_aula SET em_sala  = %s WHERE id = %s''',
                                                                ("Presente", id_arduino))
+                                                    db.execute(
+                                                        '''INSERT INTO registros_alunos (id, nome, horario, atraso)
+                                                           VALUES (%s, %s, %s, %s)''',
+                                                        (id_arduino, nome, tempo, "Sim"))
                                                     conec.commit()
-                                                elif result[0] and presenca_aula_2[0] == "Presente" and em_sala_aula_2[0] == "Presente":
+                                                elif result[0] and presenca_aula_2[0] == "Presente" and em_sala_aula_2[0] == "Presente" and fim_1 <= tempo_2 <= fim_2:
                                                     db.execute('''UPDATE segunda_aula SET em_sala  = %s WHERE id = %s''',
                                                                ("ausente", id_arduino))
+                                                    db.execute(
+                                                        '''INSERT INTO registros_alunos (id, nome, horario, atraso)
+                                                           VALUES (%s, %s, %s, %s)''',
+                                                        (id_arduino, nome, tempo, "Sim"))
                                                     conec.commit()
-                                                elif result[0] and presenca_aula_2[0] == "Presente" and em_sala_aula_2[0] == "ausente":
+                                                elif result[0] and presenca_aula_2[0] == "Presente" and em_sala_aula_2[0] == "ausente" and fim_1 <= tempo_2 <= fim_2:
                                                     db.execute('''UPDATE segunda_aula SET em_sala  = %s WHERE id = %s''',
                                                                ("Presente", id_arduino))
+                                                    db.execute(
+                                                        '''INSERT INTO registros_alunos (id, nome, horario, atraso)
+                                                           VALUES (%s, %s, %s, %s)''',
+                                                        (id_arduino, nome, tempo, "Sim"))
                                                     conec.commit()
-                                                elif result[0] and presenca_aula_3[0] == "Presente" and em_sala_aula_3[0] == "Presente":
+                                                elif result[0] and presenca_aula_3[0] == "Presente" and em_sala_aula_3[0] == "Presente" and fim_2 <= tempo_2 <= fim_3:
                                                     db.execute('''UPDATE terceira_aula SET em_sala  = %s WHERE id = %s''',
                                                                ("ausente", id_arduino))
+                                                    db.execute(
+                                                        '''INSERT INTO registros_alunos (id, nome, horario, atraso)
+                                                           VALUES (%s, %s, %s, %s)''',
+                                                        (id_arduino, nome, tempo, "Sim"))
                                                     conec.commit()
-                                                elif result[0] and presenca_aula_3[0] == "Presente" and em_sala_aula_3[0] == "ausente":
+                                                elif result[0] and presenca_aula_3[0] == "Presente" and em_sala_aula_3[0] == "ausente"  and fim_2 <= tempo_2 <= fim_3:
                                                     db.execute('''UPDATE terceira_aula SET em_sala  = %s WHERE id = %s''',
                                                                ("Presente", id_arduino))
+                                                    db.execute(
+                                                        '''INSERT INTO registros_alunos (id, nome, horario, atraso)
+                                                           VALUES (%s, %s, %s, %s)''',
+                                                        (id_arduino, nome, tempo, "Sim"))
                                                     conec.commit()
 
                                     except psycopg.IntegrityError as e:
@@ -168,13 +246,72 @@ class App(ctk.CTk):
                             db.execute('SELECT nome FROM professores WHERE id = %s', (id_arduino,))
                             result = db.fetchone()
                             if result is None:
-                                print("ID not found in alunos or professores")
+                                print("ID não achado em alunos ou professores")
                             else:
-                                nome = result[0]
-                                db.execute('INSERT INTO registros_professores (id, nome, horario) VALUES (%s, %s, %s)',
-                                           (id_arduino, nome, tempo))
-                                conec.commit()
-                                print("mandou")
+                                if inicio_1 <= tempo_2 <= atraso:
+                                    nome = result[0]
+                                    db.execute('''UPDATE professores
+                                                  SET atraso = %s,
+                                                      estado = %s
+                                                  WHERE id = %s''',
+                                               ("Não", "Presente", id_arduino))
+                                    conec.commit()
+
+                                    db.execute('SELECT atraso, presenças FROM professores WHERE id = %s', (id_arduino,))
+                                    atraso_prof = db.fetchall()
+
+                                    presenca_atual = atraso_prof[0][1]
+
+                                    presenca = presenca_atual + 1
+
+                                    db.execute('UPDATE professores SET presenças = %s WHERE id = %s ',
+                                               (presenca, id_arduino))
+
+                                    conec.commit()
+                                    db.execute(
+                                        'INSERT INTO registros_professores (id, nome, horario, atraso) VALUES (%s, %s, %s)',
+                                        (id_arduino, nome, tempo, atraso_prof[0]))
+
+                                    conec.commit()
+                                elif atraso <= tempo_2 <= fim_3:
+                                    nome = result[0]
+                                    db.execute('''UPDATE professores
+                                                  SET atraso = %s,
+                                                      estado = %s
+                                                  WHERE id = %s''',
+                                               ("Sim", "Presente", id_arduino))
+                                    conec.commit()
+
+                                    db.execute('SELECT atraso, presenças FROM professores WHERE id = %s', (id_arduino,))
+                                    atraso_prof = db.fetchall()
+
+                                    presenca_atual = atraso_prof[0][1]
+
+                                    presenca = presenca_atual + 1
+
+                                    db.execute('UPDATE professores SET presenças = %s WHERE id = %s ',
+                                               (presenca, id_arduino))
+
+                                    conec.commit()
+                                    db.execute(
+                                        'INSERT INTO registros_professores (id, nome, horario, atraso) VALUES (%s, %s, %s)',
+                                        (id_arduino, nome, tempo, atraso_prof[0]))
+
+                                    conec.commit()
+                                else:
+                                    nome = result[0]
+                                    db.execute('''UPDATE professores SET atraso = %s,estado = %s WHERE id = %s''',
+                                               ("Fora de aula", "Presente", id_arduino))
+                                    conec.commit()
+
+                                    db.execute('SELECT atraso FROM professores WHERE id = %s', (id_arduino,))
+                                    atraso_prof = db.fetchone()
+
+                                    db.execute(
+                                        'INSERT INTO registros_professores (id, nome, horario, atraso) VALUES (%s, %s, %s)',
+                                        (id_arduino, nome, tempo, atraso_prof[0]))
+
+                                    conec.commit()
                         else:
                             print("Fora do horario de aula")
                             arduino.write(b'n')
@@ -201,13 +338,17 @@ class App(ctk.CTk):
 
                 if tipo == "professor":
                     nome = self.entry_nome_prof.get()
-                    fn.salvar_prof(arduino, nome)
+                    login = self.entry_login_prof.get()
+                    senha = self.entry_senha_prof.get()
+                    fn.salvar_prof(arduino, nome, login , senha)
                     self.form.destroy()
                 elif tipo == "aluno":
                     nome = self.entry_nome_aluno.get()
                     serie = self.entry_serie_aluno.get()
                     sala = self.entry_sala_aluno.get()
-                    fn.salvar_aluno(arduino, nome, serie, sala)
+                    login = self.entry_login_aluno.get()
+                    senha = self.entry_senha_aluno.get()
+                    fn.salvar_aluno(arduino, nome, serie, sala, login, senha)
                     self.form.destroy()
 
             arduino = sincronizar()
@@ -217,30 +358,41 @@ class App(ctk.CTk):
             verificacao = self.verificacao_prof.get_input()
             if verificacao == "sim" or verificacao == "s":
                 self.form = ctk.CTkToplevel(self)
-                self.form.geometry("300x300")
+                self.form.geometry("500x300")
                 self.form.title("Formulario")
                 self.form.configure(fg_color="#A1CDF4")
                 self.form.columnconfigure(1, weight=1)
-                self.form.rowconfigure(5, weight=1)
+                self.form.rowconfigure((1,2,3,4,5,6,7,8,9), weight=1)
                 self.form.resizable(False, False)
 
                 self.label_nome_prof = ctk.CTkLabel(self.form, font=("Arial", 20), text_color="#000000", text="Coloque o nome:")
                 self.entry_nome_prof = ctk.CTkEntry(self.form, font=("Arial", 15), text_color="#ffffff",width= 180, height= 30)
-                self.enviar = ctk.CTkButton(self.form, width=200, height=30, text="Enviar", fg_color="#4e0da0",text_color="#ffffff", border_width=2, border_color="#000000", command=lambda: enviar(arduino, "professor"))
-                self.enviar.grid(row=5, column=1, padx=30, pady=30)
 
-                self.label_nome_prof.grid(row=2, column=1, padx=30, pady=30)
-                self.entry_nome_prof.grid(row=4, column=1, padx=30, pady=30)
+                self.label_login_prof = ctk.CTkLabel(self.form, font=("Arial", 20), text_color="#000000", text="Coloque um email:")
+                self.entry_login_prof = ctk.CTkEntry(self.form, font=("Arial", 15), text_color="#ffffff", width=180,height=30)
+
+                self.label_senha_prof = ctk.CTkLabel(self.form, font=("Arial", 20), text_color="#000000",text="Coloque uma senha:")
+                self.entry_senha_prof = ctk.CTkEntry(self.form, font=("Arial", 15), text_color="#ffffff", width=180,height=30)
+
+                self.enviar = ctk.CTkButton(self.form, width=200, height=30, text="Enviar", fg_color="#4e0da0",text_color="#ffffff", border_width=2, border_color="#000000", command=lambda: enviar(arduino, "professor"))
+                self.enviar.grid(row=9, column=1, padx=30, pady=15)
+
+                self.label_nome_prof.grid(row=2, column=1, padx=30, pady=10)
+                self.entry_nome_prof.grid(row=4, column=1, padx=30, pady=10)
+                self.label_login_prof.grid(row=5, column=1, padx=30, pady=10)
+                self.entry_login_prof.grid(row=6, column=1, padx=30, pady=10)
+                self.label_senha_prof.grid(row=7, column=1, padx=30, pady=10)
+                self.entry_senha_prof.grid(row=8, column=1, padx=30, pady=10)
 
 
                 return None
             elif verificacao != "sim" or  verificacao != "s":
                 self.form = ctk.CTkToplevel(self)
-                self.form.geometry("500x700")
+                self.form.geometry("500x550")
                 self.form.title("Formulario")
                 self.form.configure(fg_color="#A1CDF4")
                 self.form.columnconfigure(1, weight=1)
-                self.form.rowconfigure(8, weight=1)
+                self.form.rowconfigure(11, weight=1)
                 self.form.resizable(False, False)
 
                 self.label_nome_aluno = ctk.CTkLabel(self.form, font=("Arial", 20), text_color="#000000",text="Coloque o nome:")
@@ -252,19 +404,30 @@ class App(ctk.CTk):
                 self.label_sala_aluno = ctk.CTkLabel(self.form, font=("Arial", 20), text_color="#000000",text="Coloque a sala:")
                 self.entry_sala_aluno = ctk.CTkEntry(self.form, font=("Arial", 15), text_color="#ffffff", width=180,height=30)
 
-                self.enviar_aluno = ctk.CTkButton(self.form, width=200, height=30, text="Enviar", fg_color="#4e0da0",text_color="#ffffff", border_width=2, border_color="#000000", command=lambda: enviar(arduino, "aluno"))
-                self.enviar_aluno.grid(row=8, column=1, padx=30, pady=30)
+                self.label_login_aluno = ctk.CTkLabel(self.form, font=("Arial", 20), text_color="#000000",text="Coloque um email:")
+                self.entry_login_aluno = ctk.CTkEntry(self.form, font=("Arial", 15), text_color="#ffffff", width=180,height=30)
 
-                self.label_nome_aluno.grid(row=1, column=1, padx=30, pady=30)
-                self.entry_nome_aluno.grid(row=2, column=1, padx=30, pady=30)
-                self.label_serie_aluno.grid(row=3, column=1, padx=30, pady=30)
-                self.entry_serie_aluno.grid(row=4, column=1, padx=30, pady=30)
-                self.label_sala_aluno.grid(row=5, column=1, padx=30, pady=30)
-                self.entry_sala_aluno.grid(row=6, column=1, padx=30, pady=30)
+                self.label_senha_aluno = ctk.CTkLabel(self.form, font=("Arial", 20), text_color="#000000",text="Coloque uma senha:")
+                self.entry_senha_aluno = ctk.CTkEntry(self.form, font=("Arial", 15), text_color="#ffffff", width=180,height=30)
+
+                self.enviar_aluno = ctk.CTkButton(self.form, width=200, height=30, text="Enviar", fg_color="#4e0da0",text_color="#ffffff", border_width=2, border_color="#000000", command=lambda: enviar(arduino, "aluno"))
+                self.enviar_aluno.grid(row=11, column=1, padx=30, pady=15)
+
+                self.label_nome_aluno.grid(row=1, column=1, padx=30, pady=10)
+                self.entry_nome_aluno.grid(row=2, column=1, padx=30, pady=10)
+                self.label_serie_aluno.grid(row=3, column=1, padx=30, pady=10)
+                self.entry_serie_aluno.grid(row=4, column=1, padx=30, pady=10)
+                self.label_sala_aluno.grid(row=5, column=1, padx=30, pady=10)
+                self.entry_sala_aluno.grid(row=6, column=1, padx=30, pady=10)
+                self.label_login_aluno.grid(row=7, column=1, padx=30, pady=10)
+                self.entry_login_aluno.grid(row=8, column=1, padx=30, pady=10)
+                self.label_senha_aluno.grid(row=9, column=1, padx=30, pady=10)
+                self.entry_senha_aluno.grid(row=10, column=1, padx=30, pady=10)
 
                 return None
             else:
                 erro_mensagem("na verificacao")
+                return None
 
         def deletar():
             arduino = sincronizar()
@@ -286,7 +449,7 @@ class App(ctk.CTk):
             self.tabela.rowconfigure(1, weight=1)
             self.tabela.resizable(False, False)
 
-            self.tabela_aluno = ctk.CTkTextbox(self.tabela, width=1100, height=420, font=("Arial", 30), text_color="#000000", fg_color="#B5B5B5", border_width=3, border_color="#000000")
+            self.tabela_aluno = ctk.CTkTextbox(self.tabela, width=1100, height=420, font=("Arial", 18), text_color="#000000", fg_color="#B5B5B5", border_width=3, border_color="#000000")
 
             self.destroy_tabela = ctk.CTkButton(self.tabela, width=350, height=60, text="Voltar", fg_color="#4e0da0", border_width=3, border_color="#000000", command=self.tabela.destroy)
 
@@ -317,7 +480,7 @@ class App(ctk.CTk):
             self.tabela.rowconfigure(1, weight=1)
             self.tabela.resizable(False, False)
 
-            self.tabela_prof = ctk.CTkTextbox(self.tabela, width=1100, height=420, font=("Arial", 30),text_color="#000000", fg_color="#B5B5B5", border_width=3,border_color="#000000")
+            self.tabela_prof = ctk.CTkTextbox(self.tabela, width=1100, height=420, font=("Arial", 20),text_color="#000000", fg_color="#B5B5B5", border_width=3,border_color="#000000")
 
             self.destroy_tabela = ctk.CTkButton(self.tabela, width=350, height=60, text="Voltar", fg_color="#4e0da0",border_width=3, border_color="#000000", command=self.tabela.destroy)
 
@@ -583,7 +746,7 @@ class App(ctk.CTk):
 
 
             #Tab 1
-            self.tabela_aluno = ctk.CTkTextbox(self.tabelas.tab("Tab_aluno"), width=1100, height=420, font=("Arial", 30), text_color="#000000", fg_color="#B5B5B5", border_width=3,border_color="#000000")
+            self.tabela_aluno = ctk.CTkTextbox(self.tabelas.tab("Tab_aluno"), width=1100, height=420, font=("Arial", 18), text_color="#000000", fg_color="#B5B5B5", border_width=3,border_color="#000000")
 
             self.destroy_tabela = ctk.CTkButton(self.tabelas.tab("Tab_aluno"), width=350, height=60, text="Voltar", fg_color="#4e0da0",border_width=3, border_color="#000000", command=self.tabview_tabelas.destroy)
 
@@ -609,7 +772,7 @@ class App(ctk.CTk):
 
 
             #Tab 2
-            self.tabela_prof = ctk.CTkTextbox(self.tabelas.tab("Tab_prof"), width=1100, height=420, font=("Arial", 30),text_color="#000000", fg_color="#B5B5B5", border_width=3,border_color="#000000")
+            self.tabela_prof = ctk.CTkTextbox(self.tabelas.tab("Tab_prof"), width=1100, height=420, font=("Arial", 20),text_color="#000000", fg_color="#B5B5B5", border_width=3,border_color="#000000")
 
             self.atualizar = ctk.CTkButton(self.tabelas.tab("Tab_prof"), width=350, height=60, text="Atualizar", fg_color="#4e0da0",border_width=3, border_color="#000000", command= lambda : form_att("professor"))
 
@@ -640,6 +803,7 @@ class App(ctk.CTk):
         self.grid_rowconfigure((1,2,3,4,5,6), weight=2)
         self.grid_columnconfigure((1,2,3,4,5,6), weight=2)
         self.configure(fg_color = "#A1CDF4")
+        self.resizable(False, False)
 
 
         #Menu
@@ -670,7 +834,7 @@ class App(ctk.CTk):
         self.menu.grid(row=1, column= 1, columnspan= 2 ,rowspan=6 ,sticky="nws", pady=(80,0))
         self.borda_menu.grid(row=1,rowspan=6, column=2, sticky="ns", padx=(8,0))
         self.header.grid(row=1, column=1, columnspan=6, sticky="new" )
-        self.borda_header.grid(row=1, column=1, columnspan=6, sticky="e", pady=(15,0))
+        self.borda_header.grid(row=1, column=1, columnspan=6, sticky="e", pady=(13,0))
         self.sincronia.pack(side="right", padx= 20, pady= 20)
 
         #Buttons

@@ -12,11 +12,13 @@ db = conec.cursor()
 
 
 
-def salvar_cadastro_prof(arduino, nome):
+def salvar_cadastro_prof(arduino, nome, login, senha):
             arduino.reset_input_buffer()
             arduino.reset_output_buffer()
             arduino.write("i".encode())
             time.sleep(3)
+            estado = "ausente"
+            atrasado = "Fora de aula"
 
             while True:
                 if arduino.in_waiting > 0:
@@ -26,7 +28,7 @@ def salvar_cadastro_prof(arduino, nome):
                         idArduino = int(linha)
                         if idArduino:
                             try:
-                                db.execute('''INSERT INTO professores (id, nome) VALUES (%s, %s)''', (idArduino, nome))
+                                db.execute('''INSERT INTO professores (id, nome, login, senha, estado, atraso) VALUES (%s, %s, %s, %s, %s, %s)''', (idArduino, nome, login, senha, estado, atrasado))
                                 print("Cadastro feito com sucesso!")
                                 arduino.reset_input_buffer()
                                 arduino.reset_output_buffer()
@@ -44,7 +46,7 @@ def salvar_cadastro_prof(arduino, nome):
 
             return print("cadastro feito!!")
 
-def salvar_cadastro_aluno(arduino, nome, serie,sala):
+def salvar_cadastro_aluno(arduino, nome, serie,sala, login, senha):
 
             arduino.reset_input_buffer()
             arduino.reset_output_buffer()
@@ -64,8 +66,8 @@ def salvar_cadastro_aluno(arduino, nome, serie,sala):
                         idArduino = int(linha)
                         if idArduino:
                             try:
-                                db.execute('''INSERT INTO alunos (id, nome, sala, serie) VALUES (%s, %s, %s, %s)''',
-                                               (idArduino, nome, sala, serie))
+                                db.execute('''INSERT INTO alunos (id, nome, sala, serie,login,senha) VALUES (%s, %s, %s, %s,%s,%s)''',
+                                               (idArduino, nome, sala, serie,login,senha))
 
                                 db.execute('''INSERT INTO primeira_aula (id, nome, sala, estado, em_sala, atrasado, horario) VALUES (%s,%s,%s,%s,%s,%s,%s)''',
                                            (idArduino, nome, sala, estado, em_sala, atrasado, horario))
@@ -92,7 +94,7 @@ def salvar_cadastro_aluno(arduino, nome, serie,sala):
             time.sleep(0.1)
 
 
-def salvar_prof(arduino, nome):
+def salvar_prof(arduino, nome , login , senha):
 
             arduino.reset_input_buffer()
             arduino.reset_output_buffer()
@@ -101,9 +103,9 @@ def salvar_prof(arduino, nome):
 
             arduino.reset_input_buffer()
             arduino.reset_output_buffer()
-            salvar_cadastro_prof(arduino, nome)
+            salvar_cadastro_prof(arduino, nome, login , senha)
 
-def salvar_aluno(arduino, nome, serie, sala):
+def salvar_aluno(arduino, nome, serie, sala, login, senha):
             arduino.reset_input_buffer()
             arduino.reset_output_buffer()
             arduino.write("l".encode())
@@ -111,7 +113,7 @@ def salvar_aluno(arduino, nome, serie, sala):
 
             arduino.reset_input_buffer()
             arduino.reset_output_buffer()
-            salvar_cadastro_aluno(arduino, nome, serie, sala)
+            salvar_cadastro_aluno(arduino, nome, serie, sala, login, senha)
 
 def deletar(arduino, id):
     id_valido = int(id)  # Garante que 'id_valido' é um inteiro
@@ -124,6 +126,18 @@ def deletar(arduino, id):
 
         if db.rowcount == 0:
             db.execute('DELETE FROM professores WHERE id = %s', (id_valido,))
+            conec.commit()
+            arduino.write("k".encode())
+            time.sleep(0.2)
+            arduino.write(bytes([id_valido]))
+
+            return None
+        elif db.rowcount > 0:
+            db.execute('DELETE FROM primeira_aula WHERE id = %s', (id_valido,))
+            conec.commit()
+            db.execute('DELETE FROM segunda_aula WHERE id = %s', (id_valido,))
+            conec.commit()
+            db.execute('DELETE FROM terceira_aula WHERE id = %s', (id_valido,))
             conec.commit()
             arduino.write("k".encode())
             time.sleep(0.2)
